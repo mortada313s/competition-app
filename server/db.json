@@ -1,76 +1,5 @@
 {
-  "results": [
-    {
-      "name": "mr",
-      "token": "mpyah8qo-rphdm7",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780504702085
-    },
-    {
-      "name": "mr",
-      "token": "mpyah8qo-rphdm7",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780504754886
-    },
-    {
-      "name": "mr",
-      "token": "mpyah8qo-rphdm7",
-      "prize": "آيفون 15 برو",
-      "challenge": 1,
-      "timestamp": 1780504767068
-    },
-    {
-      "name": "قق",
-      "token": "mpyaus8w-5nxzpd",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780505274765
-    },
-    {
-      "name": "mr",
-      "token": "mpybbf0q-gu6dwn",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780506058604
-    },
-    {
-      "name": "مرتضى",
-      "token": "mpybibfi-mz6ee4",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780506383659
-    },
-    {
-      "name": "rg",
-      "token": "mpym0q1g-3shsxp",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780524066463
-    },
-    {
-      "name": "f",
-      "token": "mpym2jli-4kk9yc",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780524130176
-    },
-    {
-      "name": "mortada",
-      "token": "mpz0a835-4tog6d",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780548050747
-    },
-    {
-      "name": "Ali",
-      "token": "mpz0gum6-klqefp",
-      "prize": null,
-      "challenge": 2,
-      "timestamp": 1780548318094
-    }
-  ],
+  "results": [],
   "participants": {
     "mpyah8qo-rphdm7": {
       "name": "mr",
@@ -111,20 +40,24 @@
       "name": "Ali",
       "agentId": "mortada",
       "timestamp": 1780548270853
+    },
+    "mpzfmjj3-01uedh": {
+      "name": "ali",
+      "agentId": "mohmmed-mpzfktu5",
+      "timestamp": 1780573730663
+    },
+    "mpzg2wv9-9afcjf": {
+      "name": "Mortada",
+      "agentId": "ali-mpzg2aej",
+      "timestamp": 1780574494458
+    },
+    "mpzg9ggb-ly8hpk": {
+      "name": "Ali",
+      "agentId": "ali-mpzg8z03",
+      "timestamp": 1780574799723
     }
   },
-  "agents": [
-    {
-      "id": "علي",
-      "name": "علي",
-      "createdAt": 1780506303880
-    },
-    {
-      "id": "mortada",
-      "name": "Mortada",
-      "createdAt": 1780548203918
-    }
-  ],
+  "agents": [],
   "config": {
     "target1": 12,
     "target2": 8,

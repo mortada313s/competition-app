@@ -1,14 +1,14 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { apiGetDB, apiSaveConfig, apiSaveAgents, apiSaveBranding } from '../utils/api'
+import { apiGetDB, apiSaveConfig, apiSaveAgents, apiSaveBranding, apiAdminUpdate, apiDeleteResult, apiDeleteAllResults } from '../utils/api'
 
 const defaultConfig = {
-  target1: 7.0, target2: 4.0, speed1: 50, speed2: 50,
-  max1: 10, max2: 10, prize1: 'جائزة أولى',
-  prizeA: 'جائزة أ', prizeB: 'جائزة ب', prizeAWeight: 70,
+  target1: 7.0, target2: 4.0,
+  max1: 10, max2: 10,
+  prize1: 'جائزة أولى', prizeA: 'جائزة أ', prizeB: 'جائزة ب', prizeAWeight: 70,
 }
 
-const TABS = ['الإحصائيات', 'المندوبون', 'الإعدادات', 'الهوية', 'النتائج']
+const TABS = ['الإحصائيات', 'المندوبون', 'الإعدادات', 'الهوية', 'النتائج', 'الحساب']
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
@@ -18,10 +18,16 @@ export default function AdminDashboard() {
   const [agents, setAgents] = useState([])
   const [participants, setParticipants] = useState({})
   const [branding, setBranding] = useState({ companyName: '', welcome: '', logoUrl: null })
-  const [newAgent, setNewAgent] = useState('')
+  const [adminName, setAdminName] = useState('admin')
+  const [newAgent, setNewAgent] = useState({ name: '', code: '' })
   const [savedMsg, setSavedMsg] = useState('')
   const [loading, setLoading] = useState(true)
   const [logoPreview, setLogoPreview] = useState(null)
+  const [showCodes, setShowCodes] = useState({})
+  const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+  const [accountForm, setAccountForm] = useState({ currentPass: '', newName: '', newPass: '', confirmPass: '' })
+  const [accountError, setAccountError] = useState('')
+  const [accountSuccess, setAccountSuccess] = useState(false)
   const logoRef = useRef()
 
   useEffect(() => {
@@ -38,6 +44,7 @@ export default function AdminDashboard() {
     setAgents(db.agents || [])
     setParticipants(db.participants || {})
     if (db.branding) setBranding(db.branding)
+    if (db.admin?.name) setAdminName(db.admin.name)
     setLoading(false)
   }
 
@@ -47,11 +54,11 @@ export default function AdminDashboard() {
   }
 
   async function handleAddAgent() {
-    if (!newAgent.trim()) return
-    const id = newAgent.trim().toLowerCase().replace(/\s+/g, '-')
-    if (agents.find(a => a.id === id)) return
-    const updated = [...agents, { id, name: newAgent.trim(), createdAt: Date.now() }]
-    setAgents(updated); await apiSaveAgents(updated); setNewAgent('')
+    if (!newAgent.name.trim() || !newAgent.code.trim() || newAgent.code.length < 4) return
+    const id = newAgent.name.trim().toLowerCase().replace(/\s+/g, '-') + '-' + Date.now().toString(36)
+    if (agents.find(a => a.name === newAgent.name.trim())) return
+    const updated = [...agents, { id, name: newAgent.name.trim(), code: newAgent.code.trim(), createdAt: Date.now() }]
+    setAgents(updated); await apiSaveAgents(updated); setNewAgent({ name: '', code: '' })
   }
 
   async function handleDeleteAgent(id) {
@@ -63,20 +70,41 @@ export default function AdminDashboard() {
     const formData = new FormData()
     formData.append('companyName', branding.companyName || '')
     formData.append('welcome', branding.welcome || '')
-    if (logoRef.current && logoRef.current.files[0]) {
-      formData.append('logo', logoRef.current.files[0])
-    }
+    if (logoRef.current?.files[0]) formData.append('logo', logoRef.current.files[0])
     const res = await apiSaveBranding(formData)
     if (res.branding) setBranding(res.branding)
     setSavedMsg('branding'); setTimeout(() => setSavedMsg(''), 2000)
   }
 
-  function handleLogoChange(e) {
-    const file = e.target.files[0]
-    if (file) setLogoPreview(URL.createObjectURL(file))
+  async function handleDeleteResult(index) {
+    await apiDeleteResult(index)
+    await loadData()
+  }
+
+  async function handleDeleteAllResults() {
+    await apiDeleteAllResults()
+    setConfirmDeleteAll(false)
+    await loadData()
+  }
+
+  async function handleUpdateAccount() {
+    setAccountError(''); setAccountSuccess(false)
+    if (!accountForm.currentPass) { setAccountError('أدخل كلمة المرور الحالية'); return }
+    if (accountForm.newPass && accountForm.newPass !== accountForm.confirmPass) { setAccountError('كلمة المرور الجديدة غير متطابقة'); return }
+    if (accountForm.newPass && accountForm.newPass.length < 4) { setAccountError('كلمة المرور الجديدة يجب أن تكون 4 أحرف على الأقل'); return }
+    const res = await apiAdminUpdate(accountForm.currentPass, accountForm.newName || adminName, accountForm.newPass || accountForm.currentPass)
+    if (res.ok) {
+      setAccountSuccess(true)
+      setAccountForm({ currentPass: '', newName: '', newPass: '', confirmPass: '' })
+      await loadData()
+      setTimeout(() => setAccountSuccess(false), 3000)
+    } else {
+      setAccountError(res.error || 'حدث خطأ')
+    }
   }
 
   function handleLogout() { localStorage.removeItem('admin_auth'); navigate('/admin') }
+  function toggleCode(id) { setShowCodes(p => ({ ...p, [id]: !p[id] })) }
 
   function getAgentStats(agentId) {
     const tokens = Object.entries(participants).filter(([,v]) => v.agentId === agentId).map(([k]) => k)
@@ -108,7 +136,7 @@ export default function AdminDashboard() {
           <div>
             <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.65rem', color: 'var(--blue2)', letterSpacing: 4, marginBottom: '0.3rem' }}>ADMIN PANEL</div>
             <h1 style={{ fontSize: '1.8rem', fontWeight: 900, background: 'linear-gradient(135deg, var(--text), var(--blue2))', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-              لوحة التحكم
+              {adminName}
             </h1>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
@@ -173,32 +201,52 @@ export default function AdminDashboard() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
             <div className="card-neon">
               <h3 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--cyan)', marginBottom: '1rem', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>ADD AGENT</h3>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
-                <input style={{ ...inp, flex: 1 }} placeholder="اسم المندوب" value={newAgent} onChange={e => setNewAgent(e.target.value)} onKeyDown={e => e.key === 'Enter' && handleAddAgent()} />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr auto', gap: '0.75rem', alignItems: 'end' }}>
+                <div>
+                  <label style={lbl}>اسم المندوب</label>
+                  <input style={inp} type="text" placeholder="مثال: أحمد" value={newAgent.name} onChange={e => setNewAgent({ ...newAgent, name: e.target.value })} />
+                </div>
+                <div>
+                  <label style={lbl}>الرمز السري</label>
+                  <input style={inp} type="text" placeholder="4 أحرف على الأقل" value={newAgent.code} onChange={e => setNewAgent({ ...newAgent, code: e.target.value })} onKeyDown={e => e.key === 'Enter' && handleAddAgent()} />
+                </div>
                 <button className="btn-primary" style={{ width: 'auto', padding: '12px 24px' }} onClick={handleAddAgent}>إضافة</button>
               </div>
             </div>
+
+            <div style={{ background: 'rgba(26,108,240,0.05)', border: '1px solid rgba(26,108,240,0.15)', borderRadius: 12, padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.5rem' }}>
+              <div>
+                <div style={{ fontSize: '0.72rem', color: 'var(--blue2)', fontFamily: 'var(--font-display)', letterSpacing: 2, marginBottom: '0.3rem' }}>AGENT LOGIN URL</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.75rem', color: 'var(--text)' }}>{window.location.origin}/agent</div>
+              </div>
+              <button onClick={() => navigator.clipboard.writeText(window.location.origin + '/agent')} style={{ ...inp, width: 'auto', padding: '8px 16px', cursor: 'pointer', fontSize: '0.8rem', color: 'var(--blue2)' }}>نسخ الرابط</button>
+            </div>
+
             {agents.length === 0
               ? <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', fontFamily: 'var(--font-display)', fontSize: '0.8rem', letterSpacing: 2 }}>NO AGENTS YET</div>
               : agents.map(a => {
-                const url = window.location.origin + '/agent/' + a.id
                 const s = getAgentStats(a.id)
                 return (
                   <div key={a.id} className="card-neon" style={{ padding: '1.25rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
-                      <div>
-                        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.3rem' }}>{a.name}</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '0.6rem', color: 'var(--blue2)', wordBreak: 'break-all', marginBottom: '0.5rem' }}>{url}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '1rem', marginBottom: '0.4rem' }}>{a.name}</div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>الرمز:</span>
+                          <span style={{ fontFamily: 'var(--font-display)', fontSize: '0.75rem', color: showCodes[a.id] ? 'var(--gold)' : 'var(--text-muted)', letterSpacing: 2 }}>
+                            {showCodes[a.id] ? a.code : '••••'}
+                          </span>
+                          <button onClick={() => toggleCode(a.id)} style={{ background: 'transparent', border: 'none', color: 'var(--blue2)', cursor: 'pointer', fontSize: '0.75rem', fontFamily: 'var(--font-ar)' }}>
+                            {showCodes[a.id] ? 'إخفاء' : 'إظهار'}
+                          </button>
+                        </div>
                         <div style={{ display: 'flex', gap: '1rem', fontSize: '0.82rem' }}>
                           <span style={{ color: 'var(--text-muted)' }}>مشاركون: <b style={{ color: 'var(--text)' }}>{s.total}</b></span>
                           <span style={{ color: 'var(--green)' }}>فوز: <b>{s.wins}</b></span>
                           <span style={{ color: 'var(--red)' }}>خسارة: <b>{s.losses}</b></span>
                         </div>
                       </div>
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <button onClick={() => navigator.clipboard.writeText(url)} style={{ ...inp, width: 'auto', padding: '8px 14px', cursor: 'pointer', fontSize: '0.8rem' }}>نسخ</button>
-                        <button onClick={() => handleDeleteAgent(a.id)} style={{ background: 'rgba(255,64,96,0.1)', color: 'var(--red)', border: '1px solid rgba(255,64,96,0.3)', borderRadius: 10, padding: '8px 14px', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-ar)' }}>حذف</button>
-                      </div>
+                      <button onClick={() => handleDeleteAgent(a.id)} style={{ background: 'rgba(255,64,96,0.1)', color: 'var(--red)', border: '1px solid rgba(255,64,96,0.3)', borderRadius: 10, padding: '8px 14px', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-ar)' }}>حذف</button>
                     </div>
                   </div>
                 )
@@ -212,15 +260,14 @@ export default function AdminDashboard() {
           <div className="card-neon" style={{ maxWidth: 640 }}>
             <h2 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--cyan)', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>COMPETITION SETTINGS</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-
               {[
                 { label: 'التحدي الأول', color: 'var(--cyan)', fields: [
-                  { key: 'target1', label: 'الوقت المطلوب (ثانية)', type: 'number', min: 0.1, max: 60, step: 0.1 },
-                  { key: 'max1', label: 'الحد الأقصى (ثانية)', type: 'number', min: 1, max: 99 },
+                  { key: 'target1', label: 'الوقت المطلوب (ثانية)', min: 0.1, max: 60, step: 0.1 },
+                  { key: 'max1', label: 'الحد الأقصى (ثانية)', min: 1, max: 99 },
                 ]},
                 { label: 'التحدي الثاني', color: 'var(--gold)', fields: [
-                  { key: 'target2', label: 'الوقت المطلوب (ثانية)', type: 'number', min: 0.1, max: 60, step: 0.1 },
-                  { key: 'max2', label: 'الحد الأقصى (ثانية)', type: 'number', min: 1, max: 99 },
+                  { key: 'target2', label: 'الوقت المطلوب (ثانية)', min: 0.1, max: 60, step: 0.1 },
+                  { key: 'max2', label: 'الحد الأقصى (ثانية)', min: 1, max: 99 },
                 ]},
               ].map((section, si) => (
                 <div key={si} style={{ background: 'rgba(5,15,35,0.6)', borderRadius: 10, padding: '1rem', border: '1px solid var(--border)' }}>
@@ -229,16 +276,12 @@ export default function AdminDashboard() {
                     {section.fields.map(f => (
                       <div key={f.key}>
                         <label style={lbl}>{f.label}</label>
-                        <input style={inp} type={f.type} min={f.min} max={f.max} step={f.step || 1}
-                          value={config[f.key]}
-                          onChange={e => setConfig({ ...config, [f.key]: parseFloat(e.target.value) })}
-                        />
+                        <input style={inp} type="number" min={f.min} max={f.max} step={f.step || 1} value={config[f.key]} onChange={e => setConfig({ ...config, [f.key]: parseFloat(e.target.value) })} />
                       </div>
                     ))}
                   </div>
                 </div>
               ))}
-
               <div style={{ background: 'rgba(5,15,35,0.6)', borderRadius: 10, padding: '1rem', border: '1px solid var(--border)' }}>
                 <div style={{ fontSize: '0.75rem', color: 'var(--green)', marginBottom: '0.75rem', fontWeight: 700, fontFamily: 'var(--font-display)', letterSpacing: 2 }}>PRIZES</div>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -253,7 +296,6 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </div>
-
               <button className="btn-primary" onClick={handleSaveConfig} style={{ background: savedMsg === 'config' ? 'var(--green)' : undefined }}>
                 {savedMsg === 'config' ? '✓ تم الحفظ' : 'حفظ الإعدادات'}
               </button>
@@ -266,48 +308,30 @@ export default function AdminDashboard() {
           <div className="card-neon" style={{ maxWidth: 560 }}>
             <h2 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--gold)', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>BRANDING</h2>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-
-              {/* Logo upload */}
               <div>
-                <label style={lbl}>شعار الشركة (Logo)</label>
+                <label style={lbl}>شعار الشركة</label>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
                   <div style={{ width: 80, height: 80, background: 'rgba(5,15,35,0.8)', border: '2px dashed var(--border)', borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', flexShrink: 0 }}>
-                    {(logoPreview || branding.logoUrl)
-                      ? <img src={logoPreview || branding.logoUrl} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
-                      : <span style={{ fontSize: '2rem' }}>🖼</span>
-                    }
+                    {(logoPreview || branding.logoUrl) ? <img src={logoPreview || branding.logoUrl} alt="logo" style={{ width: '100%', height: '100%', objectFit: 'contain' }} /> : <span style={{ fontSize: '2rem' }}>🖼</span>}
                   </div>
                   <div style={{ flex: 1 }}>
-                    <input ref={logoRef} type="file" accept="image/*" onChange={handleLogoChange} style={{ display: 'none' }} id="logo-upload" />
-                    <label htmlFor="logo-upload" style={{ ...inp, display: 'inline-block', cursor: 'pointer', textAlign: 'center', width: 'auto', padding: '10px 20px', fontSize: '0.85rem' }}>
-                      📁 اختر صورة
-                    </label>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>PNG, JPG, SVG — بحد أقصى 2MB</div>
+                    <input ref={logoRef} type="file" accept="image/*" onChange={e => { const f = e.target.files[0]; if(f) setLogoPreview(URL.createObjectURL(f)) }} style={{ display: 'none' }} id="logo-upload" />
+                    <label htmlFor="logo-upload" style={{ ...inp, display: 'inline-block', cursor: 'pointer', textAlign: 'center', width: 'auto', padding: '10px 20px', fontSize: '0.85rem' }}>📁 اختر صورة</label>
+                    <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.4rem' }}>PNG, JPG, SVG</div>
                   </div>
                 </div>
               </div>
-
+              <div><label style={lbl}>اسم الشركة</label><input style={inp} type="text" placeholder="شركتنا السياحية" value={branding.companyName || ''} onChange={e => setBranding({ ...branding, companyName: e.target.value })} /></div>
               <div>
-                <label style={lbl}>اسم الشركة</label>
-                <input style={inp} type="text" placeholder="شركتنا السياحية" value={branding.companyName || ''} onChange={e => setBranding({ ...branding, companyName: e.target.value })} />
+                <label style={lbl}>الرسالة الترحيبية</label>
+                <textarea style={{ ...inp, minHeight: 120, resize: 'vertical', lineHeight: 1.8 }} placeholder="مرحباً بك في مسابقتنا..." value={branding.welcome || ''} onChange={e => setBranding({ ...branding, welcome: e.target.value })} />
               </div>
-
-              <div>
-                <label style={lbl}>الرسالة الترحيبية (تظهر للمتسابق)</label>
-                <textarea style={{ ...inp, minHeight: 120, resize: 'vertical', lineHeight: 1.8 }}
-                  placeholder="مرحباً بك في مسابقتنا! نتمنى لك تجربة ممتعة..."
-                  value={branding.welcome || ''}
-                  onChange={e => setBranding({ ...branding, welcome: e.target.value })}
-                />
-              </div>
-
               {branding.welcome && (
                 <div style={{ background: 'rgba(26,108,240,0.05)', border: '1px solid rgba(26,108,240,0.15)', borderRadius: 10, padding: '1rem' }}>
                   <div style={{ fontSize: '0.72rem', color: 'var(--blue2)', marginBottom: '0.5rem', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>PREVIEW</div>
                   <p style={{ color: 'var(--text)', lineHeight: 1.9, fontSize: '0.9rem' }}>{branding.welcome}</p>
                 </div>
               )}
-
               <button className="btn-gold" onClick={handleSaveBranding} style={{ background: savedMsg === 'branding' ? 'var(--green)' : undefined, color: savedMsg === 'branding' ? '#fff' : undefined }}>
                 {savedMsg === 'branding' ? '✓ تم الحفظ' : 'حفظ الهوية'}
               </button>
@@ -318,29 +342,97 @@ export default function AdminDashboard() {
         {/* TAB 4: Results */}
         {tab === 4 && (
           <div className="card-neon">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-              <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--cyan)', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>ALL RESULTS ({results.length})</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+              <h2 style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--cyan)', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>
+                ALL RESULTS ({results.length})
+              </h2>
+              {results.length > 0 && (
+                confirmDeleteAll
+                  ? <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{ fontSize: '0.82rem', color: 'var(--red)' }}>هل أنت متأكد؟</span>
+                      <button onClick={handleDeleteAllResults} style={{ background: 'var(--red)', color: '#fff', border: 'none', borderRadius: 8, padding: '6px 14px', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-ar)' }}>نعم، احذف الكل</button>
+                      <button onClick={() => setConfirmDeleteAll(false)} style={{ background: 'rgba(255,255,255,0.05)', color: 'var(--text-muted)', border: '1px solid var(--border)', borderRadius: 8, padding: '6px 14px', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-ar)' }}>إلغاء</button>
+                    </div>
+                  : <button onClick={() => setConfirmDeleteAll(true)} style={{ background: 'rgba(255,64,96,0.1)', color: 'var(--red)', border: '1px solid rgba(255,64,96,0.3)', borderRadius: 8, padding: '7px 16px', fontSize: '0.82rem', cursor: 'pointer', fontFamily: 'var(--font-ar)' }}>
+                      🗑 حذف الكل
+                    </button>
+              )}
             </div>
             {results.length === 0
               ? <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '3rem', fontFamily: 'var(--font-display)', fontSize: '0.8rem', letterSpacing: 2 }}>NO RESULTS YET</div>
               : <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: 520, overflowY: 'auto' }}>
-                  {[...results].reverse().map((r, i) => (
-                    <div key={i} style={{ background: 'rgba(5,15,35,0.6)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <div>
-                        <div style={{ fontWeight: 700 }}>{r.name}</div>
-                        <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
-                          {new Date(r.timestamp).toLocaleString('ar')} — تحدي {r.challenge}
+                  {[...results].reverse().map((r, i) => {
+                    const realIndex = results.length - 1 - i
+                    return (
+                      <div key={i} style={{ background: 'rgba(5,15,35,0.6)', border: '1px solid var(--border)', borderRadius: 10, padding: '0.75rem 1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 700 }}>{r.name}</div>
+                          <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: 2 }}>
+                            {new Date(r.timestamp).toLocaleString('ar')} — تحدي {r.challenge}
+                          </div>
                         </div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 700, color: r.prize ? 'var(--green)' : 'var(--red)', background: r.prize ? 'rgba(0,232,122,0.08)' : 'rgba(255,64,96,0.08)', border: '1px solid ' + (r.prize ? 'rgba(0,232,122,0.25)' : 'rgba(255,64,96,0.25)'), borderRadius: 8, padding: '4px 12px', whiteSpace: 'nowrap' }}>
+                          {r.prize || 'خسارة'}
+                        </div>
+                        <button onClick={() => handleDeleteResult(realIndex)} style={{ background: 'rgba(255,64,96,0.08)', color: 'var(--red)', border: '1px solid rgba(255,64,96,0.2)', borderRadius: 8, padding: '6px 10px', fontSize: '0.8rem', cursor: 'pointer', fontFamily: 'var(--font-ar)', flexShrink: 0 }}>
+                          ✕
+                        </button>
                       </div>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: r.prize ? 'var(--green)' : 'var(--red)', background: r.prize ? 'rgba(0,232,122,0.08)' : 'rgba(255,64,96,0.08)', border: '1px solid ' + (r.prize ? 'rgba(0,232,122,0.25)' : 'rgba(255,64,96,0.25)'), borderRadius: 8, padding: '4px 12px' }}>
-                        {r.prize || 'خسارة'}
-                      </div>
-                    </div>
-                  ))}
+                    )
+                  })}
                 </div>
             }
           </div>
         )}
+
+        {/* TAB 5: Account */}
+        {tab === 5 && (
+          <div className="card-neon" style={{ maxWidth: 480 }}>
+            <h2 style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '1.5rem', color: 'var(--cyan)', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>ACCOUNT SETTINGS</h2>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+
+              <div style={{ background: 'rgba(5,15,35,0.6)', borderRadius: 10, padding: '1rem', border: '1px solid var(--border)' }}>
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '0.75rem', fontFamily: 'var(--font-display)', letterSpacing: 2 }}>CURRENT ACCOUNT</div>
+                <div style={{ fontWeight: 700, color: 'var(--gold)', fontSize: '1.1rem' }}>{adminName}</div>
+              </div>
+
+              <div>
+                <label style={lbl}>كلمة المرور الحالية *</label>
+                <input style={inp} type="password" placeholder="••••••••" value={accountForm.currentPass} onChange={e => setAccountForm({ ...accountForm, currentPass: e.target.value })} />
+              </div>
+
+              <div style={{ height: 1, background: 'linear-gradient(90deg, transparent, var(--border), transparent)' }} />
+
+              <div>
+                <label style={lbl}>اسم المستخدم الجديد (اختياري)</label>
+                <input style={inp} type="text" placeholder={adminName} value={accountForm.newName} onChange={e => setAccountForm({ ...accountForm, newName: e.target.value })} />
+              </div>
+
+              <div>
+                <label style={lbl}>كلمة المرور الجديدة (اختياري)</label>
+                <input style={inp} type="password" placeholder="••••••••" value={accountForm.newPass} onChange={e => setAccountForm({ ...accountForm, newPass: e.target.value })} />
+              </div>
+
+              <div>
+                <label style={lbl}>تأكيد كلمة المرور الجديدة</label>
+                <input style={inp} type="password" placeholder="••••••••" value={accountForm.confirmPass} onChange={e => setAccountForm({ ...accountForm, confirmPass: e.target.value })} />
+              </div>
+
+              {accountError && (
+                <div style={{ background: 'rgba(255,64,96,0.1)', border: '1px solid rgba(255,64,96,0.3)', borderRadius: 10, padding: '12px 16px', color: '#ff7090', fontSize: '0.88rem' }}>⚠ {accountError}</div>
+              )}
+
+              {accountSuccess && (
+                <div style={{ background: 'rgba(0,232,122,0.08)', border: '1px solid rgba(0,232,122,0.25)', borderRadius: 10, padding: '12px 16px', color: 'var(--green)', fontSize: '0.88rem' }}>✓ تم تحديث بيانات الحساب بنجاح</div>
+              )}
+
+              <button className="btn-primary" onClick={handleUpdateAccount}>
+                حفظ التغييرات
+              </button>
+            </div>
+          </div>
+        )}
+
       </div>
     </div>
   )

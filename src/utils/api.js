@@ -1,5 +1,29 @@
 const BASE = window.location.origin
 
+export async function apiAdminLogin(name, pass) {
+  const res = await fetch(BASE + '/api/admin/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, pass })
+  })
+  return res.json()
+}
+
+export async function apiAdminUpdate(currentPass, newName, newPass) {
+  const res = await fetch(BASE + '/api/admin/update', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ currentPass, newName, newPass })
+  })
+  return res.json()
+}
+
+export async function apiAgentLogin(name, code) {
+  const res = await fetch(BASE + '/api/agent/login', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ name, code })
+  })
+  return res.json()
+}
+
 export async function apiSaveParticipant(token, name, agentId) {
   await fetch(BASE + '/api/participant', {
     method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -40,8 +64,16 @@ export async function apiGetDB() {
 }
 
 export async function apiSaveBranding(formData) {
-  const res = await fetch(BASE + '/api/branding', {
-    method: 'POST', body: formData
-  })
+  const res = await fetch(BASE + '/api/branding', { method: 'POST', body: formData })
+  return res.json()
+}
+
+export async function apiDeleteResult(index) {
+  const res = await fetch(BASE + '/api/results/' + index, { method: 'DELETE' })
+  return res.json()
+}
+
+export async function apiDeleteAllResults() {
+  const res = await fetch(BASE + '/api/results/all', { method: 'DELETE' })
   return res.json()
 }
