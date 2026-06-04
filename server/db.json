@@ -1,0 +1,140 @@
+{
+  "results": [
+    {
+      "name": "mr",
+      "token": "mpyah8qo-rphdm7",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780504702085
+    },
+    {
+      "name": "mr",
+      "token": "mpyah8qo-rphdm7",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780504754886
+    },
+    {
+      "name": "mr",
+      "token": "mpyah8qo-rphdm7",
+      "prize": "آيفون 15 برو",
+      "challenge": 1,
+      "timestamp": 1780504767068
+    },
+    {
+      "name": "قق",
+      "token": "mpyaus8w-5nxzpd",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780505274765
+    },
+    {
+      "name": "mr",
+      "token": "mpybbf0q-gu6dwn",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780506058604
+    },
+    {
+      "name": "مرتضى",
+      "token": "mpybibfi-mz6ee4",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780506383659
+    },
+    {
+      "name": "rg",
+      "token": "mpym0q1g-3shsxp",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780524066463
+    },
+    {
+      "name": "f",
+      "token": "mpym2jli-4kk9yc",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780524130176
+    },
+    {
+      "name": "mortada",
+      "token": "mpz0a835-4tog6d",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780548050747
+    },
+    {
+      "name": "Ali",
+      "token": "mpz0gum6-klqefp",
+      "prize": null,
+      "challenge": 2,
+      "timestamp": 1780548318094
+    }
+  ],
+  "participants": {
+    "mpyah8qo-rphdm7": {
+      "name": "mr",
+      "agentId": "default",
+      "timestamp": 1780504619173
+    },
+    "mpyaus8w-5nxzpd": {
+      "name": "قق",
+      "agentId": "default",
+      "timestamp": 1780505250955
+    },
+    "mpybbf0q-gu6dwn": {
+      "name": "mr",
+      "agentId": "default",
+      "timestamp": 1780506026966
+    },
+    "mpybibfi-mz6ee4": {
+      "name": "مرتضى",
+      "agentId": "علي",
+      "timestamp": 1780506348901
+    },
+    "mpym0q1g-3shsxp": {
+      "name": "rg",
+      "agentId": "علي",
+      "timestamp": 1780524003810
+    },
+    "mpym2jli-4kk9yc": {
+      "name": "f",
+      "agentId": "علي",
+      "timestamp": 1780524088761
+    },
+    "mpz0a835-4tog6d": {
+      "name": "mortada",
+      "agentId": "علي",
+      "timestamp": 1780547961781
+    },
+    "mpz0gum6-klqefp": {
+      "name": "Ali",
+      "agentId": "mortada",
+      "timestamp": 1780548270853
+    }
+  },
+  "agents": [
+    {
+      "id": "علي",
+      "name": "علي",
+      "createdAt": 1780506303880
+    },
+    {
+      "id": "mortada",
+      "name": "Mortada",
+      "createdAt": 1780548203918
+    }
+  ],
+  "config": {
+    "target1": 12,
+    "target2": 8,
+    "speed1": 140,
+    "speed2": 140,
+    "max1": 100,
+    "max2": 100,
+    "prize1": "100$",
+    "prizeA": "25,000DIQ",
+    "prizeB": "سفرة مجانية ",
+    "prizeAWeight": 20
+  }
+}
