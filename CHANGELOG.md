@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented here.
 
-## [1.0.0] - 2025-06-05
+## [1.0.0] - 2026-06-05
 
 ### Added
 - Agent login system with name + secret code

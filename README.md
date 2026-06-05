@@ -4,12 +4,15 @@
 <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
 <img src="https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white" />
 <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" />
+<img src="https://img.shields.io/badge/Made%20in-Iraq%20🇮🇶-red?style=for-the-badge" />
 
 # 🏆 Competition App
 
 ### An interactive QR-based competition platform for events and companies
 
 [Report Bug](../../issues) · [Request Feature](../../issues)
+
+**Maintained by [Mortada Mohammed Abdulabbas](https://github.com/mortada313s) — Iraq 🇮🇶**
 
 </div>
 
@@ -27,6 +30,7 @@
 - [Database Schema](#-database-schema)
 - [Security](#-security)
 - [Roadmap](#-roadmap)
+- [Author](#-author)
 
 ---
 
@@ -94,9 +98,14 @@ competition-app/
 │   └── 📂 uploads/                  # Uploaded logo images
 │
 ├── 📂 dist/                         # Production build output
+├── 📄 .gitignore
+├── 📄 CHANGELOG.md
+├── 📄 CONTRIBUTING.md
+├── 📄 LICENSE
+├── 📄 README.md
+├── 📄 SECURITY.md
 ├── 📄 package.json
-├── 📄 vite.config.js
-└── 📄 README.md
+└── 📄 vite.config.js
 
 ---
 
@@ -115,7 +124,7 @@ competition-app/
 ### 1. Clone the repository
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/competition-app.git
+git clone https://github.com/mortada313s/competition-app.git
 cd competition-app
 ```
 
@@ -319,12 +328,21 @@ All data is stored in `server/db.json`:
 
 ---
 
+## 👤 Author
+
+**Mortada Mohammed Abdulabbas**
+
+- GitHub: [@mortada313s](https://github.com/mortada313s)
+- Location: Iraq 🇮🇶
+
+---
+
 ## 📄 License
 
-MIT License — Free to use with attribution.
+MIT License © 2026 [Mortada Mohammed Abdulabbas](https://github.com/mortada313s)
 
 ---
 
 <div align="center">
-  Built with ❤️ — Competition App 2025
+  Built with ❤️ from Iraq 🇮🇶 — Competition App 2026
 </div>

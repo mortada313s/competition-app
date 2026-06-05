@@ -10,7 +10,8 @@
 
 If you discover a security vulnerability, please do NOT open a public issue.
 
-Instead, contact us directly via GitHub private message or email.
+Contact the maintainer directly:
+- **GitHub:** [@mortada313s](https://github.com/mortada313s)
 
 We will respond within 48 hours and work on a fix promptly.
 
