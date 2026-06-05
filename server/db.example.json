@@ -1,0 +1,14 @@
+{
+  "admin": { "name": "admin", "pass": "admin1234" },
+  "agents": [],
+  "participants": {},
+  "results": [],
+  "config": {
+    "target1": 7.0, "target2": 4.0,
+    "max1": 10, "max2": 10,
+    "prize1": "جائزة أولى",
+    "prizeA": "جائزة أ", "prizeB": "جائزة ب",
+    "prizeAWeight": 70
+  },
+  "branding": { "companyName": "", "welcome": "", "logoUrl": null }
+}
