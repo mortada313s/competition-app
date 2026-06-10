@@ -3,6 +3,7 @@
 <img src="https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white" />
 <img src="https://img.shields.io/badge/Vite-8-646CFF?style=for-the-badge&logo=vite&logoColor=white" />
 <img src="https://img.shields.io/badge/Node.js-20-339933?style=for-the-badge&logo=node.js&logoColor=white" />
+<img src="https://img.shields.io/badge/MySQL-8.0-4479A1?style=for-the-badge&logo=mysql&logoColor=white" />
 <img src="https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge" />
 <img src="https://img.shields.io/badge/Made%20in-Iraq%20🇮🇶-red?style=for-the-badge" />
 
@@ -22,6 +23,7 @@
 
 - [Overview](#-overview)
 - [Features](#-features)
+- [Tech Stack](#-tech-stack)
 - [Project Structure](#-project-structure)
 - [Requirements](#-requirements)
 - [Installation](#-installation)
@@ -51,7 +53,7 @@ Admin controls settings ──► Agent registers participants ──► Partici
 │ sends result
 ▼
 ┌───────────┐    real-time update  ┌──────────────────┐
-│   Admin   │ ◄────────────────── │     Server       │
+│   Admin   │ ◄────────────────── │  MySQL Database  │
 └───────────┘                      └──────────────────┘
 
 ---
@@ -68,6 +70,20 @@ Admin controls settings ──► Agent registers participants ──► Partici
 | 🏢 Company Branding | Upload logo + custom welcome message |
 | 🛡️ QR Protection | Each QR code can only be used once |
 | 🗑️ Result Management | Delete individual results or clear all records |
+| 🗄️ MySQL Database | Persistent data with relational integrity |
+
+---
+
+## 🛠 Tech Stack
+
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18 + Vite 8 |
+| Backend | Node.js 20 (HTTP) |
+| Database | MySQL 8.0 |
+| QR Code | qrcode.react |
+| Routing | React Router DOM |
+| Styling | CSS Variables + Custom Design System |
 
 ---
 
@@ -92,12 +108,11 @@ competition-app/
 │       └── 📄 api.js                # Server communication functions
 │
 ├── 📂 server/
-│   ├── 📄 index.cjs                 # Node.js HTTP server
-│   ├── 📄 db.json                   # JSON database (auto-created)
-│   ├── 📄 db.example.json           # Database template
+│   ├── 📄 index.cjs                 # Node.js HTTP server + MySQL queries
 │   └── 📂 uploads/                  # Uploaded logo images
 │
 ├── 📂 dist/                         # Production build output
+├── 📄 .env.example                  # Environment variables template
 ├── 📄 .gitignore
 ├── 📄 CHANGELOG.md
 ├── 📄 CONTRIBUTING.md
@@ -115,6 +130,7 @@ competition-app/
 |-------------|---------|
 | Node.js | `>= 20.x` |
 | npm | `>= 10.x` |
+| MySQL | `>= 8.0` |
 | Browser | Chrome / Firefox / Safari |
 
 ---
@@ -134,25 +150,46 @@ cd competition-app
 npm install
 ```
 
-### 3. Set up the database
+### 3. Set up MySQL
 
 ```bash
-cp server/db.example.json server/db.json
+sudo mysql
 ```
 
-### 4. Build the project
+```sql
+CREATE DATABASE competition_db CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'competition_user'@'localhost' IDENTIFIED BY 'your_password';
+GRANT ALL PRIVILEGES ON competition_db.* TO 'competition_user'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+Then create the tables:
+
+```bash
+sudo mysql competition_db < server/schema.sql
+```
+
+### 4. Configure environment
+
+```bash
+cp .env.example .env
+# Edit .env with your database credentials
+```
+
+### 5. Build the project
 
 ```bash
 npm run build
 ```
 
-### 5. Start the server
+### 6. Start the server
 
 ```bash
 node server/index.cjs
 ```
 
-### 6. Open the app
+### 7. Open the app
 http://localhost:4000
 
 > **Accessing from other devices on the same network:**
@@ -229,74 +266,70 @@ Password: admin1234
 | `POST` | `/api/config` | Save competition settings |
 | `POST` | `/api/agents` | Update agents list |
 | `POST` | `/api/branding` | Update company branding |
-| `DELETE` | `/api/results/:index` | Delete a specific result |
+| `DELETE` | `/api/results/:id` | Delete a specific result by ID |
 | `DELETE` | `/api/results/all` | Delete all results |
-
-### Example Request
-
-```javascript
-// Agent login
-const res = await fetch('/api/agent/login', {
-  method: 'POST',
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify({ name: 'Ahmed', code: '1234' })
-})
-const data = await res.json()
-// { ok: true, agent: { id: 'ahmed-abc123', name: 'Ahmed' } }
-```
 
 ---
 
 ## 🗄️ Database Schema
 
-All data is stored in `server/db.json`:
+```sql
+-- Admin account
+CREATE TABLE admin (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 
-```json
-{
-  "admin": {
-    "name": "admin",
-    "pass": "admin1234"
-  },
-  "agents": [
-    {
-      "id": "ahmed-abc123",
-      "name": "Ahmed",
-      "code": "1234",
-      "createdAt": 1234567890
-    }
-  ],
-  "participants": {
-    "TOKEN_ID": {
-      "name": "Mohammed",
-      "agentId": "ahmed-abc123",
-      "timestamp": 1234567890
-    }
-  },
-  "results": [
-    {
-      "name": "Mohammed",
-      "token": "TOKEN_ID",
-      "prize": "iPhone 15",
-      "challenge": 1,
-      "timestamp": 1234567890
-    }
-  ],
-  "config": {
-    "target1": 7.0,
-    "target2": 4.0,
-    "max1": 10,
-    "max2": 10,
-    "prize1": "First Prize",
-    "prizeA": "Prize A",
-    "prizeB": "Prize B",
-    "prizeAWeight": 70
-  },
-  "branding": {
-    "companyName": "Our Travel Company",
-    "welcome": "Welcome to our competition!",
-    "logoUrl": "/uploads/logo.png"
-  }
-}
+-- Agents (representatives)
+CREATE TABLE agents (
+  id VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Participants registered by agents
+CREATE TABLE participants (
+  token VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  agent_id VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
+);
+
+-- Competition results
+CREATE TABLE results (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  participant_token VARCHAR(100) NOT NULL,
+  participant_name VARCHAR(100) NOT NULL,
+  prize VARCHAR(255),
+  challenge INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (participant_token) REFERENCES participants(token) ON DELETE CASCADE
+);
+
+-- Competition configuration
+CREATE TABLE config (
+  id INT PRIMARY KEY DEFAULT 1,
+  target1 DECIMAL(5,1) DEFAULT 7.0,
+  target2 DECIMAL(5,1) DEFAULT 4.0,
+  max1 INT DEFAULT 10,
+  max2 INT DEFAULT 10,
+  prize1 VARCHAR(255),
+  prize_a VARCHAR(255),
+  prize_b VARCHAR(255),
+  prize_a_weight INT DEFAULT 70
+);
+
+-- Company branding
+CREATE TABLE branding (
+  id INT PRIMARY KEY DEFAULT 1,
+  company_name VARCHAR(255),
+  welcome TEXT,
+  logo_url VARCHAR(500)
+);
 ```
 
 ---
@@ -305,9 +338,9 @@ All data is stored in `server/db.json`:
 
 | Aspect | Current | Recommended for Production |
 |--------|---------|---------------------------|
-| Admin auth | Plain text in JSON | JWT + bcrypt |
+| Admin auth | Plain text in MySQL | bcrypt hashing |
 | Agent auth | Plain text code | bcrypt hash |
-| Database | JSON file | PostgreSQL / MongoDB |
+| Database | MySQL (local) | MySQL with SSL |
 | HTTPS | ❌ | ✅ Required |
 | Rate Limiting | ❌ | ✅ Required |
 | Input Validation | Basic | Full server-side validation |
@@ -318,8 +351,7 @@ All data is stored in `server/db.json`:
 
 - [ ] Password hashing with bcrypt
 - [ ] JWT session management
-- [ ] Real database (PostgreSQL or MongoDB)
-- [ ] Deploy to the internet (Railway / Render)
+- [ ] Deploy to the internet (Railway / Render / VPS)
 - [ ] Mobile app (React Native / Expo)
 - [ ] Real-time updates via WebSocket
 - [ ] Export results to Excel / PDF

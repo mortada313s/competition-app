@@ -1,0 +1,61 @@
+-- Competition App — Database Schema
+-- Run: sudo mysql competition_db < server/schema.sql
+
+SET NAMES utf8mb4;
+
+CREATE TABLE IF NOT EXISTS admin (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  username VARCHAR(100) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS agents (
+  id VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  code VARCHAR(100) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS participants (
+  token VARCHAR(100) PRIMARY KEY,
+  name VARCHAR(100) NOT NULL,
+  agent_id VARCHAR(100),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (agent_id) REFERENCES agents(id) ON DELETE SET NULL
+);
+
+CREATE TABLE IF NOT EXISTS results (
+  id INT PRIMARY KEY AUTO_INCREMENT,
+  participant_token VARCHAR(100) NOT NULL,
+  participant_name VARCHAR(100) NOT NULL,
+  prize VARCHAR(255),
+  challenge INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (participant_token) REFERENCES participants(token) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS config (
+  id INT PRIMARY KEY DEFAULT 1,
+  target1 DECIMAL(5,1) DEFAULT 7.0,
+  target2 DECIMAL(5,1) DEFAULT 4.0,
+  max1 INT DEFAULT 10,
+  max2 INT DEFAULT 10,
+  prize1 VARCHAR(255) DEFAULT 'First Prize',
+  prize_a VARCHAR(255) DEFAULT 'Prize A',
+  prize_b VARCHAR(255) DEFAULT 'Prize B',
+  prize_a_weight INT DEFAULT 70,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS branding (
+  id INT PRIMARY KEY DEFAULT 1,
+  company_name VARCHAR(255) DEFAULT '',
+  welcome TEXT,
+  logo_url VARCHAR(500) DEFAULT NULL,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+INSERT IGNORE INTO admin (id, username, password) VALUES (1, 'admin', 'admin1234');
+INSERT IGNORE INTO config (id) VALUES (1);
+INSERT IGNORE INTO branding (id, company_name, welcome) VALUES (1, '', '');
