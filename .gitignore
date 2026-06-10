@@ -4,9 +4,11 @@ node_modules/
 # Build
 dist/
 
-# Database & uploads (بيانات حساسة)
-server/db.json
+# Uploads (user content)
 server/uploads/
+
+# Old JSON database (replaced by MySQL)
+server/db.json
 
 # Logs
 *.log

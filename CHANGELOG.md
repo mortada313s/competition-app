@@ -1,6 +1,15 @@
 # Changelog
 
-All notable changes to this project will be documented here.
+## [1.1.0] - 2026-06-10
+
+### Changed
+- Migrated database from JSON file to MySQL
+- Server now uses mysql2 connection pool
+- Agents deletion uses transactions for data integrity
+
+### Added
+- MySQL schema with foreign key constraints
+- `.env.example` for environment configuration
 
 ## [1.0.0] - 2026-06-05
 
